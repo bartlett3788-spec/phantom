@@ -590,6 +590,101 @@ Generate all 4 weeks with progressive weights.`;
   ST.onboarded=true;save();setTimeout(()=>launchApp(),300);
 }
 
+
+// ── SESSION FINISHERS — unique per session type ──
+const FINISHERS = {
+  Push: [
+    '3 rounds: 15 push-ups + 10 pike push-ups + 10 lateral raises, 20s rest between rounds',
+    '4 rounds: 12 diamond push-ups + 10 dumbbell shoulder press, 30s rest',
+    '3 rounds: max push-ups + 15 tricep dips, 30s rest — chase the burn',
+    '21s: 7 full push-ups + 7 half-rep push-ups + 7 bottom-half push-ups, no rest',
+    '3 rounds: 12 pike push-ups + 10 lateral raises + 8 tricep overhead extension, 20s rest',
+  ],
+  Pull: [
+    '3 rounds: max inverted rows + 15 hammer curls, 30s rest',
+    '4 rounds: 10 dumbbell rows + 12 dumbbell curls + 10 face pulls, 20s rest',
+    '3 rounds: max chin-up holds (dead hang 20s) + 15 hammer curls, 30s rest',
+    '21s curls: 7 bottom-half + 7 top-half + 7 full range, rest 30s, repeat x3',
+    '3 rounds: 12 dumbbell rows each side + 15 resistance band pull-aparts, 20s rest',
+  ],
+  Legs: [
+    '3 rounds: 20 jump squats + 15 glute bridges + 15 calf raises, 30s rest',
+    '4 rounds: 15 Bulgarian split squats each leg + 20 glute bridges, 20s rest',
+    '3 rounds: 20 bodyweight squats + 15 jump squats + 20 calf raises, 30s rest',
+    'Leg burn-out: 50 bodyweight squats unbroken, then 30 calf raises, then 20 glute bridges',
+    '3 rounds: 12 jumping lunges each leg + 15 glute bridges, 30s rest — no cheating the depth',
+  ],
+  Upper: [
+    '3 rounds: 12 push-ups + 12 dumbbell rows + 10 dumbbell curls, 20s rest',
+    '4 rounds: 10 dumbbell shoulder press + 15 push-ups + 10 hammer curls, 30s rest',
+    '3 rounds: max push-ups + 12 dumbbell rows + 10 lateral raises, 30s rest',
+    '3 rounds: 10 dumbbell bench press + 10 dumbbell rows + 10 curls, 20s rest — superset everything',
+    '21 method: 7 push-ups + 7 inverted rows + 7 dumbbell curls, repeat x3 with 30s rest',
+  ],
+  Lower: [
+    '3 rounds: 20 glute bridges + 15 jump squats + 20 calf raises, 30s rest',
+    '4 rounds: 15 walking lunges each leg + 15 glute bridges, 20s rest',
+    '3 rounds: 20 bodyweight squats + 15 jumping lunges + 20 calf raises, 30s rest',
+    'Posterior chain finisher: 3 rounds of 15 glute bridges + 10 Nordic curl eccentrics, 30s rest',
+    '50 glute bridges unbroken, then 30 calf raises, then 20 bodyweight squats — one shot',
+  ],
+  'Total Body A': [
+    '3 rounds: 10 push-ups + 10 bodyweight squats + 10 dumbbell rows, 20s rest',
+    'Full body burn: 5 burpees + 10 push-ups + 15 squats + 20 mountain climbers, x3, 30s rest',
+    '3 rounds: 12 dumbbell thrusters + 10 push-ups + 15 glute bridges, 20s rest',
+    '4 rounds: 8 burpees + 12 goblet squats + 10 dumbbell rows, 30s rest',
+    'AMRAP 5 min: 5 push-ups + 10 squats + 5 dumbbell rows — log your rounds',
+  ],
+  'Total Body B': [
+    '3 rounds: 10 burpees + 10 push-ups + 15 jump squats, 30s rest',
+    'Full body burn: 5 burpees + 10 dumbbell rows + 15 glute bridges + 20 mountain climbers, x3, 30s rest',
+    '4 rounds: 10 dumbbell thrusters + 10 push-ups + 10 jump squats, 20s rest',
+    'AMRAP 5 min: 5 burpees + 10 push-ups + 15 squats — log your rounds',
+    '3 rounds: 12 goblet squats + 10 push-ups + 10 dumbbell curls + 15 calf raises, 20s rest',
+  ],
+  Circuit: [
+    'Tabata core: 8 rounds of 20s mountain climbers / 10s rest, then 3x15 plank shoulder taps',
+    '3 rounds: 20 mountain climbers + 15 plank shoulder taps + 10 v-sits, 20s rest',
+    'Core destroyer: 3 rounds of 20 bicycle crunches + 15 leg raises + 30s plank, 20s rest',
+    '4 rounds: 20 mountain climbers + 10 burpees + 15 jump squats, 20s rest',
+    'AMRAP 5 min: 5 burpees + 10 push-ups + 20 mountain climbers — go until the clock stops',
+  ],
+  'Chest & Triceps': [
+    '3 rounds: 15 diamond push-ups + 10 tricep dips + 10 push-ups, 20s rest — tri-set to failure',
+    '4 rounds: max push-ups + 12 diamond push-ups, 30s rest — chest and tri annihilation',
+    '21s push-up method: 7 full + 7 top-half + 7 bottom-half, x3 rounds, 30s rest',
+    '3 rounds: 12 tricep overhead extension + 15 push-ups + 10 tricep dips, 20s rest',
+    'Burnout: 100 push-up challenge — break into sets, rest as needed, finish it',
+  ],
+  'Back & Biceps': [
+    '3 rounds: 12 dumbbell rows + 15 hammer curls + 12 resistance band pull-aparts, 20s rest',
+    '21s curls: 7 bottom-half + 7 top-half + 7 full range, x3, 30s rest — feel the peak',
+    '4 rounds: max inverted rows + 12 dumbbell curls, 30s rest',
+    '3 rounds: 10 dumbbell rows each side + 15 hammer curls + 10 resistance band rows, 20s rest',
+    'Back pump: 3 rounds of 15 resistance band pull-aparts + 12 curls + 10 rows, 20s rest',
+  ],
+  Shoulders: [
+    '3 rounds: 15 lateral raises + 10 front raises + 10 rear delt flys, 20s rest — 3D shoulder pump',
+    '4 rounds: 12 lateral raises + 12 Arnold press + 10 pike push-ups, 20s rest',
+    '3 rounds: 20 resistance band pull-aparts + 15 lateral raises + 10 pike push-ups, 20s rest',
+    'Shoulder circuit: 10 front raises + 10 lateral raises + 10 rear delt flys, no rest, x4 rounds',
+    '3 rounds: 15 lateral raises + 10 rear delt flys + 10 dumbbell shoulder press, 20s rest',
+  ],
+  Arms: [
+    '3 rounds: 21s curls (7+7+7) + 15 tricep dips + 12 hammer curls, 20s rest',
+    '4 rounds: 12 dumbbell curls + 12 tricep overhead extension, 20s rest — superset to the end',
+    '3 rounds: max chin-ups + 12 diamond push-ups, 30s rest',
+    'Arm blast: 3 rounds of 15 curls + 15 tricep dips + 15 hammer curls, 20s rest',
+    '21s method: 7 full curls + 7 half curls + 7 top-half, then 7 full tricep + 7 half + 7 top, x3',
+  ],
+};
+
+function getFinisher(sessionType, weekNum) {
+  const list = FINISHERS[sessionType] || FINISHERS['Total Body A'];
+  // Rotate through finishers based on week number so they change each week
+  return list[(weekNum - 1) % list.length];
+}
+
 function buildFallback(){
   const af=activeFull();
   const seq=SEQ[P.structure]||SEQ.PPL_UL;
@@ -614,7 +709,7 @@ function buildFallback(){
             const b=parseFloat(ex.tw);
             return{name:ex.name,sets:ex.sets,reps:ex.reps,targetWeight:!isNaN(b)?(Math.round((b+adj)*2)/2)+'kg':ex.tw,notes:ex.notes};
           }),
-          finisher:'3 rounds: 10 press-ups + 10 bodyweight squats, 30s rest'
+          finisher:getFinisher(sType, wk)
         };
       })
     }))
