@@ -329,17 +329,18 @@ const ALL_EX = {
     {name:'Dumbbell bench press',sets:4,reps:'8-10',tw:'24kg',notes:'Full range of motion',needs:['Dumbbells','Bench']},
     {name:'Overhead press',sets:3,reps:'8-10',tw:'40kg',notes:'Full lockout overhead',needs:['Barbell']},
     {name:'Dumbbell shoulder press',sets:3,reps:'8-10',tw:'18kg',notes:'Core braced throughout',needs:['Dumbbells']},
+    {name:'Dip',sets:3,reps:'8-10',tw:'BW',notes:'Lean forward slightly for chest and tricep focus',needs:['Dip bar']},
+    {name:'Tricep overhead extension',sets:3,reps:'10-12',tw:'16kg',notes:'Elbows close to head, full stretch at bottom',needs:['Dumbbells']},
+    {name:'Dumbbell skull crushers',sets:3,reps:'10-12',tw:'14kg',notes:'Lower slowly to forehead, full extension at top',needs:['Dumbbells']},
+    {name:'Tricep pushdown',sets:3,reps:'12-15',tw:'25kg',notes:'Elbows pinned to sides',needs:['Cable machine']},
+    {name:'Diamond push-ups',sets:3,reps:'12-15',tw:'BW',notes:'Hands close together, elbows track back',needs:[]},
     {name:'Incline dumbbell press',sets:3,reps:'10-12',tw:'20kg',notes:'Slight arch, full ROM',needs:['Dumbbells','Bench']},
     {name:'Lateral raises',sets:3,reps:'12-15',tw:'10kg',notes:'Lead with elbows',needs:['Dumbbells']},
     {name:'Dumbbell front raise',sets:3,reps:'12',tw:'8kg',notes:'Control the descent',needs:['Dumbbells']},
-    {name:'Tricep pushdown',sets:3,reps:'12-15',tw:'25kg',notes:'Elbows pinned to sides',needs:['Cable machine']},
-    {name:'Tricep overhead extension',sets:3,reps:'10-12',tw:'16kg',notes:'Elbows close to head',needs:['Dumbbells']},
-    {name:'Diamond push-ups',sets:3,reps:'12-15',tw:'BW',notes:'Hands close together',needs:[]},
     {name:'Push-ups',sets:4,reps:'15-20',tw:'BW',notes:'Full range of motion',needs:[]},
     {name:'Pike push-ups',sets:3,reps:'12',tw:'BW',notes:'Hips high',needs:[]},
     {name:'Resistance band press',sets:3,reps:'15',tw:'Band',notes:'Full extension',needs:['Resistance bands']},
     {name:'Cable lateral raises',sets:3,reps:'12-15',tw:'12kg',notes:'Lead with elbow',needs:['Cable machine']},
-    {name:'Dip',sets:3,reps:'8-10',tw:'BW',notes:'Lean forward for chest',needs:['Dip bar']},
   ],
   Pull:[
     {name:'Barbell row',sets:4,reps:'6-8',tw:'60kg',notes:'Retract scapula at top',needs:['Barbell']},
@@ -430,15 +431,16 @@ const ALL_EX = {
   'Chest & Triceps':[
     {name:'Barbell bench press',sets:4,reps:'6-8',tw:'65kg',notes:'Full ROM, controlled eccentric',needs:['Barbell','Bench']},
     {name:'Dumbbell bench press',sets:4,reps:'8-10',tw:'24kg',notes:'Full ROM, controlled eccentric',needs:['Dumbbells','Bench']},
+    {name:'Dip',sets:3,reps:'8-10',tw:'BW',notes:'Lean forward for chest and tri focus',needs:['Dip bar']},
+    {name:'Dumbbell skull crushers',sets:3,reps:'10-12',tw:'14kg',notes:'Lower slowly to forehead, full extension',needs:['Dumbbells']},
+    {name:'Tricep overhead extension',sets:3,reps:'12',tw:'16kg',notes:'Elbows close to head',needs:['Dumbbells']},
     {name:'Incline dumbbell press',sets:3,reps:'10-12',tw:'20kg',notes:'Slight arch',needs:['Dumbbells','Bench']},
     {name:'Push-ups',sets:3,reps:'15-20',tw:'BW',notes:'Full range',needs:[]},
     {name:'Cable fly',sets:3,reps:'12-15',tw:'15kg',notes:'Squeeze at centre',needs:['Cable machine']},
     {name:'Dumbbell fly',sets:3,reps:'12-15',tw:'12kg',notes:'Slight bend in elbow',needs:['Dumbbells','Bench']},
     {name:'Tricep pushdown',sets:3,reps:'12',tw:'25kg',notes:'Elbows fixed',needs:['Cable machine']},
-    {name:'Tricep overhead extension',sets:3,reps:'12',tw:'16kg',notes:'Elbows close to head',needs:['Dumbbells']},
-    {name:'Skull crushers',sets:3,reps:'10-12',tw:'28kg',notes:'Lower to forehead',needs:['Barbell','Bench']},
+    {name:'Barbell skull crushers',sets:3,reps:'10-12',tw:'28kg',notes:'Lower to forehead',needs:['Barbell','Bench']},
     {name:'Diamond push-ups',sets:3,reps:'12',tw:'BW',notes:'Hands close together',needs:[]},
-    {name:'Dip',sets:3,reps:'8-10',tw:'BW',notes:'Lean forward',needs:['Dip bar']},
   ],
   'Back & Biceps':[
     {name:'Deadlift',sets:4,reps:'5',tw:'100kg',notes:'Brace and drive',needs:['Barbell']},
@@ -480,21 +482,39 @@ const ALL_EX = {
 // OR it has no requirements (bodyweight)
 function filterExByEquip(sessionType, equip) {
   const all = ALL_EX[sessionType] || ALL_EX['Total Body A'];
-  const available = all.filter(ex => {
-    if (ex.needs.length === 0) return true; // bodyweight — always available
-    // check if user has at least one piece that satisfies
-    // Some exercises need ALL items in needs[], some need ANY
-    // Convention: needs[] means ALL required
-    // Special: 'Full gym' covers everything
+
+  function canDo(ex) {
+    if (ex.needs.length === 0) return true;
     if (equip.includes('Full gym')) return true;
     return ex.needs.every(n => equip.includes(n));
-  });
-  // Return at least 4, prefer 5 exercises
-  if (available.length === 0) {
-    // absolute fallback — bodyweight only
-    return all.filter(ex => ex.needs.length === 0).slice(0, 5);
   }
-  return available.slice(0, 5);
+
+  const available = all.filter(canDo);
+  if (available.length === 0) return all.filter(ex => ex.needs.length === 0).slice(0, 5);
+
+  // For Push: guarantee at least one tricep exercise
+  // For Pull: guarantee at least one bicep exercise
+  // For Legs: guarantee at least one posterior chain (hamstring/glute) exercise
+  const MUST_INCLUDE = {
+    Push: ['Dip','Tricep overhead extension','Dumbbell skull crushers','Diamond push-ups','Tricep pushdown'],
+    Pull: ['Dumbbell curl','Hammer curl','Resistance band curl','EZ bar curl'],
+    Legs: ['Dumbbell Romanian deadlift','Romanian deadlift','Glute bridge','Nordic curl'],
+    'Chest & Triceps': ['Dip','Dumbbell skull crushers','Tricep overhead extension','Diamond push-ups','Tricep pushdown','Barbell skull crushers'],
+    Arms: ['Dumbbell curl','Hammer curl','Tricep overhead extension','Diamond push-ups'],
+  };
+
+  const mustList = MUST_INCLUDE[sessionType];
+  if (!mustList) return available.slice(0, 5);
+
+  // Find available exercises that satisfy the must-include requirement
+  const mustEx = available.find(ex => mustList.includes(ex.name));
+
+  // If there's already a must-include exercise in first 5, just return first 5
+  const first5 = available.slice(0, 5);
+  if (!mustEx || first5.some(ex => mustList.includes(ex.name))) return first5;
+
+  // Otherwise: take first 4 + the must-include exercise
+  return [...first5.slice(0, 4), mustEx];
 }
 
 const SEQ={PPL_UL:['Push','Pull','Legs','Upper','Lower','Push','Pull'],PPL:['Push','Pull','Legs','Push','Pull','Legs','Push'],UL:['Upper','Lower','Upper','Lower','Upper','Lower','Upper'],MSG:['Chest & Triceps','Back & Biceps','Legs','Shoulders','Arms','Chest & Triceps','Back & Biceps'],TB:['Total Body A','Total Body B','Total Body A','Total Body B','Total Body A','Total Body B','Total Body A'],CIRCUIT:['Circuit','Circuit','Circuit','Circuit','Circuit','Circuit','Circuit']};
@@ -573,6 +593,9 @@ STRICT RULES:
 4. Training days: isRest:false, unique sessionType, 4-6 exercises, finisher string.
 5. CRITICAL: Every exercise MUST be achievable with ONLY the available equipment: ${equip}. Do NOT include barbell exercises if Barbell is not listed. Do NOT include cable exercises if Cable machine is not listed. Bodyweight exercises are always fine.
 6. Each training day must have DIFFERENT exercises from other training days.
+6b. Push sessions MUST include at least one direct tricep exercise (e.g. tricep overhead extension, diamond push-ups, dips, tricep pushdown).
+6c. Pull sessions MUST include at least one direct bicep exercise (e.g. dumbbell curl, hammer curl).
+6d. Legs sessions MUST include at least one posterior chain exercise (e.g. Romanian deadlift, glute bridge, Nordic curl).
 7. Avoid exercises loading: ${inj}.
 8. Weeks 2,3,4 must have progressively heavier targetWeight than week 1.
 Return: {"programmeTitle":"string","summary":"string","weeks":[{"week":1,"days":[{"day":"Sunday","isRest":true},{"day":"Monday","isRest":false,"sessionType":"Push","duration":"${P.time} min","exercises":[{"name":"Exercise","sets":4,"reps":"6-8","targetWeight":"60kg","notes":"cue"}],"finisher":"description"},...5 more days]}],"phantomNotes":["note1","note2","note3"]}
@@ -932,3 +955,4 @@ loadState();
 </script>
 </body>
 </html>
+
