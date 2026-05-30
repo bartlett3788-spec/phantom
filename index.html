@@ -217,6 +217,27 @@
     .stat-n{text-shadow:0 0 20px rgba(232,255,0,.3)}
     .wk-btn.active{box-shadow:inset 0 0 0 0 transparent}
     .day-chip.active,.ds-btn.viewing{box-shadow:0 0 8px rgba(232,255,0,.2)}
+
+    /* PHOTOS TAB */
+    .photo-upload-zone{border:2px dashed var(--border2);border-radius:var(--radius-lg);padding:2rem 1rem;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg2)}
+    .photo-upload-zone:hover{border-color:var(--yellow)}
+    .photo-upload-zone.has-photo{border-style:solid;border-color:var(--yellow);padding:.5rem}
+    .photo-upload-zone img{width:100%;border-radius:var(--radius);display:block}
+    .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+    .photo-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;text-align:center;margin-bottom:6px}
+    .checkin-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1.25rem}
+    .checkin-head{padding:.875rem 1.25rem;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .checkin-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:.75rem}
+    .checkin-photo{border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;background:var(--bg3)}
+    .checkin-photo img{width:100%;height:100%;object-fit:cover;display:block}
+    .checkin-analysis{padding:.875rem 1.25rem;border-top:1px solid var(--border)}
+    .bf-badge{background:var(--yellow);color:#000;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:800}
+    .analysis-section{margin-bottom:.75rem}
+    .analysis-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+    .analysis-text{font-size:13px;color:var(--text2);line-height:1.6}
+    .upload-progress{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
+    .upload-progress-fill{height:3px;background:var(--yellow);border-radius:2px;transition:width .3s}
+    .banner-card{background:var(--bg3);border:1px solid var(--yellow);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:12px}
   </style>
 </head>
 <body>
@@ -235,6 +256,7 @@
       <div class="nav-link active" onclick="goTab('today')" id="nl-today">Today</div>
       <div class="nav-link" onclick="goTab('programme')" id="nl-programme">Programme</div>
       <div class="nav-link" onclick="goTab('progress')" id="nl-progress">Progress</div>
+      <div class="nav-link" onclick="goTab('photos')" id="nl-photos">Photos</div>
       <div class="nav-link" onclick="goTab('profile')" id="nl-profile">Profile</div>
     </div>
   </div>
@@ -285,6 +307,13 @@
     <div class="card"><div class="card-head"><div class="card-title">Personal bests</div></div><div id="pr-pblist" style="padding:.5rem 0"></div></div>
   </div>
 
+  <div class="app-tab" id="tab-photos">
+    <div style="font-size:24px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-.5px">Progress photos</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1.25rem" id="ph-sub">Weekly body composition check-ins</div>
+    <div id="ph-checkin-banner"></div>
+    <div id="ph-timeline"></div>
+  </div>
+
   <div class="app-tab" id="tab-profile">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:1.5rem">
       <div style="width:54px;height:54px;border-radius:50%;background:var(--yellow);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000" id="pf-av">?</div>
@@ -301,6 +330,7 @@
     <div class="bn-item active" onclick="goTab('today')" id="bn-today"><i class="ti ti-bolt bn-icon"></i><span class="bn-label">Today</span></div>
     <div class="bn-item" onclick="goTab('programme')" id="bn-programme"><i class="ti ti-calendar bn-icon"></i><span class="bn-label">Programme</span></div>
     <div class="bn-item" onclick="goTab('progress')" id="bn-progress"><i class="ti ti-chart-bar bn-icon"></i><span class="bn-label">Progress</span></div>
+    <div class="bn-item" onclick="goTab('photos')" id="bn-photos"><i class="ti ti-camera bn-icon"></i><span class="bn-label">Photos</span></div>
     <div class="bn-item" onclick="goTab('profile')" id="bn-profile"><i class="ti ti-user bn-icon"></i><span class="bn-label">Profile</span></div>
   </div>
 </div>
@@ -555,7 +585,7 @@ function renderOB(){
   if(obStep===3){c.innerHTML=`${obProg()}<div class="ob-title">Programme type</div><div class="ob-sub">What are you training for?</div><div class="section-label" style="margin-top:.5rem">Type</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem" id="ob-type">${['Strength','Physique','Fitness','Hobby'].map(t=>chip(t,P.type===t,`P.type='${t}';soloChip(this,'ob-type')`)).join('')}</div><div class="section-label">Primary goal</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem" id="ob-goal">${['Muscle gain','Fat loss','Recomposition','Strength gains','General fitness'].map(g=>chip(g,P.goal===g,`P.goal='${g}';soloChip(this,'ob-goal')`)).join('')}</div><div class="section-label">Experience</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="ob-exp">${[['Novice','0–6 months'],['Intermediate','6–24 months'],['Experienced','24+ months']].map(([e,d])=>chip(`${e} <span style="font-size:11px;opacity:.6">${d}</span>`,P.exp===e,`P.exp='${e}';soloChip(this,'ob-exp')`)).join('')}</div><button class="btn-pri" style="margin-top:1.25rem" onclick="nextOB()">Continue →</button><button class="btn-ghost" onclick="prevOB()">Back</button>`;return;}
   if(obStep===4){c.innerHTML=`${obProg()}<div class="ob-title">Programme structure</div><div class="ob-sub">How should your sessions be arranged across the week?</div><div id="structures">${STRUCTURES.map(s=>structCard(s,P.structure===s.id)).join('')}</div><button class="btn-pri" style="margin-top:.5rem" onclick="nextOB()">Continue →</button><button class="btn-ghost" onclick="prevOB()">Back</button>`;return;}
   if(obStep===5){c.innerHTML=`${obProg()}<div class="ob-title">About you</div><div class="ob-sub">Used to calculate personalised starting weights.</div><div class="stat-grid-2"><div class="stat-card"><div class="stat-lbl">Age</div><input type="number" class="stat-inp" value="${P.age}" oninput="P.age=parseInt(this.value)||P.age" /><div class="stat-unit">years</div></div><div class="stat-card"><div class="stat-lbl">Weight</div><input type="number" class="stat-inp" value="${P.weight}" oninput="P.weight=parseFloat(this.value)||P.weight" /><div class="stat-unit">kg</div></div><div class="stat-card"><div class="stat-lbl">Height</div><input type="number" class="stat-inp" value="${P.height}" oninput="P.height=parseInt(this.value)||P.height" /><div class="stat-unit">cm</div></div><div class="stat-card"><div class="stat-lbl">Sex</div><select class="stat-sel" onchange="P.sex=this.value"><option ${P.sex==='Male'?'selected':''}>Male</option><option ${P.sex==='Female'?'selected':''}>Female</option><option ${P.sex==='Other'?'selected':''}>Other</option></select><div class="stat-unit">—</div></div></div><button class="btn-pri" onclick="nextOB()">Continue →</button><button class="btn-ghost" onclick="prevOB()">Back</button>`;return;}
-  if(obStep===6){c.innerHTML=`${obProg()}<div class="ob-title">Training schedule</div><div class="ob-sub">Which days can you train, and how long per session?</div><div class="section-label">Training days</div><div class="days-grid">${SK.map(sk=>`<div class="day-chip ${P.days[sk]?'active':''}" onclick="P.days['${sk}']=!P.days['${sk}'];this.classList.toggle('active')">${sk}<div class="day-tk">✓</div></div>`).join('')}</div><div class="range-block"><div class="range-header"><span class="range-label">Session length</span><span class="range-val" id="ob-tv">${P.time} min</span></div><div class="range-row"><span>20m</span><input type="range" min="20" max="120" step="5" value="${P.time}" oninput="P.time=parseInt(this.value);document.getElementById('ob-tv').textContent=this.value+' min'" /><span>2hr</span></div></div><div class="section-label">Rest periods</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="ob-rest">${['Short (30–60s)','Medium (60–90s)','Long (2–3 min)'].map(r=>chip(r,P.rest===r,`P.rest='${r}';soloChip(this,'ob-rest')`)).join('')}</div><button class="btn-pri" style="margin-top:1.25rem" onclick="nextOB()">Continue →</button><button class="btn-ghost" onclick="prevOB()">Back</button>`;return;}
+  if(obStep===6){c.innerHTML=`${obProg()}<div class="ob-title">Training schedule</div><div class="ob-sub">Which days can you train, and how long per session?</div><div class="section-label">Training days</div><div class="days-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(sk=>`<div class="day-chip ${P.days[sk]?'active':''}" onclick="P.days['${sk}']=!P.days['${sk}'];this.classList.toggle('active')">${sk}<div class="day-tk">✓</div></div>`).join('')}</div><div class="range-block"><div class="range-header"><span class="range-label">Session length</span><span class="range-val" id="ob-tv">${P.time} min</span></div><div class="range-row"><span>20m</span><input type="range" min="20" max="120" step="5" value="${P.time}" oninput="P.time=parseInt(this.value);document.getElementById('ob-tv').textContent=this.value+' min'" /><span>2hr</span></div></div><div class="section-label">Rest periods</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="ob-rest">${['Short (30–60s)','Medium (60–90s)','Long (2–3 min)'].map(r=>chip(r,P.rest===r,`P.rest='${r}';soloChip(this,'ob-rest')`)).join('')}</div><button class="btn-pri" style="margin-top:1.25rem" onclick="nextOB()">Continue →</button><button class="btn-ghost" onclick="prevOB()">Back</button>`;return;}
   if(obStep===7){
     const equips=['Full gym','Dumbbells','Bench','Pull-up bar','Barbell','Cable machine','Resistance bands','Dip bar','Treadmill','Rower'];
     const injList=['Shoulder','Lower back','Knee','Hip','Wrist','Elbow','Ankle','None'];
@@ -761,6 +791,7 @@ function goTab(name){
   if(name==='programme'){progWeek=ST.week;renderProg();}
   if(name==='progress')renderProgress();
   if(name==='profile')renderProfileTab();
+  if(name==='photos')renderPhotosTab();
 }
 
 function refreshToday(){updateHeader();renderDayStrip();renderSession();}
@@ -789,12 +820,14 @@ function renderDayStrip(){
   const strip=document.getElementById('day-strip');
   const todayIdx=new Date().getDay();
   const wk=ST.programme?.weeks.find(w=>w.week===ST.week)||ST.programme?.weeks[0];
-  strip.innerHTML=DAYS.map((fullDay,idx)=>{
+  // Display Mon→Sun (Mon=1,Tue=2...Sat=6,Sun=0) — week starts Monday
+  const MON_FIRST=[1,2,3,4,5,6,0];
+  strip.innerHTML=MON_FIRST.map(idx=>{
     const dayData=wk?.days[idx];
     const isRest=!dayData||dayData.isRest;
     const isToday=idx===todayIdx;
     const isViewing=idx===viewDayIdx;
-    return`<div class="ds-btn${isRest?' rest-day':''}${isViewing?' viewing':''}${isToday?' today-dot':''}" onclick="viewDayIdx=${idx};renderDayStrip();renderSession();updateHeader()" title="${fullDay}">${DAYS_SHORT[idx]}</div>`;
+    return`<div class="ds-btn${isRest?' rest-day':''}${isViewing?' viewing':''}${isToday?' today-dot':''}" onclick="viewDayIdx=${idx};renderDayStrip();renderSession();updateHeader()" title="${DAYS[idx]}">${DAYS_SHORT[idx]}</div>`;
   }).join('');
 }
 
@@ -929,7 +962,7 @@ function renderProfileTab(){
   const equips=['Full gym','Dumbbells','Bench','Pull-up bar','Barbell','Cable machine','Resistance bands','Dip bar','Treadmill','Rower'];
   const injList=['Shoulder','Lower back','Knee','Hip','Wrist','Elbow','Ankle','None'];
   const SK=DAYS_SHORT;
-  document.getElementById('pf-editable').innerHTML=`<div class="card" style="padding:1.25rem"><div class="section-label">Programme type</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem" id="pf-type">${['Strength','Physique','Fitness','Hobby'].map(t=>chip(t,P.type===t,`P.type='${t}';soloChip(this,'pf-type')`)).join('')}</div><div class="section-label">Primary goal</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem" id="pf-goal">${['Muscle gain','Fat loss','Recomposition','Strength gains','General fitness'].map(g=>chip(g,P.goal===g,`P.goal='${g}';soloChip(this,'pf-goal')`)).join('')}</div><div class="section-label">Experience</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="pf-exp">${[['Novice','0-6 months'],['Intermediate','6-24 months'],['Experienced','24+ months']].map(([e,d])=>chip(e+' ('+d+')',P.exp===e,`P.exp='${e}';soloChip(this,'pf-exp')`)).join('')}</div></div><div class="card" style="padding:1.25rem"><div class="section-label">Programme structure</div><div id="pf-structs">${STRUCTURES.map(s=>structCard(s,P.structure===s.id)).join('')}</div></div><div class="card" style="padding:1.25rem"><div class="section-label">About you</div><div class="stat-grid-2"><div class="stat-card"><div class="stat-lbl">Age</div><input type="number" class="stat-inp" value="${P.age}" oninput="P.age=parseInt(this.value)||P.age"/><div class="stat-unit">years</div></div><div class="stat-card"><div class="stat-lbl">Weight</div><input type="number" class="stat-inp" value="${P.weight}" oninput="P.weight=parseFloat(this.value)||P.weight"/><div class="stat-unit">kg</div></div><div class="stat-card"><div class="stat-lbl">Height</div><input type="number" class="stat-inp" value="${P.height}" oninput="P.height=parseInt(this.value)||P.height"/><div class="stat-unit">cm</div></div><div class="stat-card"><div class="stat-lbl">Sex</div><select class="stat-sel" onchange="P.sex=this.value"><option ${P.sex==='Male'?'selected':''}>Male</option><option ${P.sex==='Female'?'selected':''}>Female</option><option ${P.sex==='Other'?'selected':''}>Other</option></select><div class="stat-unit"></div></div></div></div><div class="card" style="padding:1.25rem"><div class="section-label">Training days</div><div class="days-grid">${SK.map(sk=>`<div class="day-chip ${P.days[sk]?'active':''}" onclick="P.days['${sk}']=!P.days['${sk}'];this.classList.toggle('active')">${sk}<div class="day-tk">v</div></div>`).join('')}</div><div class="range-block"><div class="range-header"><span class="range-label">Session length</span><span class="range-val" id="pf-tv">${P.time} min</span></div><div class="range-row"><span>20m</span><input type="range" min="20" max="120" step="5" value="${P.time}" oninput="P.time=parseInt(this.value);document.getElementById('pf-tv').textContent=this.value+' min'"/><span>2hr</span></div></div><div class="section-label">Rest periods</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="pf-rest">${['Short (30-60s)','Medium (60-90s)','Long (2-3 min)'].map(r=>chip(r,P.rest===r,`P.rest='${r}';soloChip(this,'pf-rest')`)).join('')}</div></div><div class="card" style="padding:1.25rem"><div class="section-label">Equipment available</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem">${equips.map(e=>chip(e,P.equip.includes(e),`toggleArr(P.equip,'${e}');this.classList.toggle('active')`)).join('')}</div><div class="section-label">Injuries or areas to avoid</div><div class="section-hint">Phantom substitutes exercises around these</div><div style="display:flex;flex-wrap:wrap;gap:8px">${injList.map(inj=>warnChip(inj,P.injuries.includes(inj),`toggleArr(P.injuries,'${inj}');this.classList.toggle('active')`)).join('')}</div></div><div class="card" style="padding:0 1.25rem"><div class="toggle-row"><div><div style="font-size:14px;font-weight:600;color:var(--text)">Daily finisher</div><div style="font-size:12px;color:var(--text2);margin-top:2px">End each session with a short finisher</div></div><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div><div class="toggle-row"><div><div style="font-size:14px;font-weight:600;color:var(--text)">Progressive overload</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Auto-calculate weekly weight targets</div></div><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div></div><button class="btn-sec" onclick="saveAndRegen()" style="margin-top:.5rem">Save and regenerate programme</button>`;
+  document.getElementById('pf-editable').innerHTML=`<div class="card" style="padding:1.25rem"><div class="section-label">Programme type</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem" id="pf-type">${['Strength','Physique','Fitness','Hobby'].map(t=>chip(t,P.type===t,`P.type='${t}';soloChip(this,'pf-type')`)).join('')}</div><div class="section-label">Primary goal</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem" id="pf-goal">${['Muscle gain','Fat loss','Recomposition','Strength gains','General fitness'].map(g=>chip(g,P.goal===g,`P.goal='${g}';soloChip(this,'pf-goal')`)).join('')}</div><div class="section-label">Experience</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="pf-exp">${[['Novice','0-6 months'],['Intermediate','6-24 months'],['Experienced','24+ months']].map(([e,d])=>chip(e+' ('+d+')',P.exp===e,`P.exp='${e}';soloChip(this,'pf-exp')`)).join('')}</div></div><div class="card" style="padding:1.25rem"><div class="section-label">Programme structure</div><div id="pf-structs">${STRUCTURES.map(s=>structCard(s,P.structure===s.id)).join('')}</div></div><div class="card" style="padding:1.25rem"><div class="section-label">About you</div><div class="stat-grid-2"><div class="stat-card"><div class="stat-lbl">Age</div><input type="number" class="stat-inp" value="${P.age}" oninput="P.age=parseInt(this.value)||P.age"/><div class="stat-unit">years</div></div><div class="stat-card"><div class="stat-lbl">Weight</div><input type="number" class="stat-inp" value="${P.weight}" oninput="P.weight=parseFloat(this.value)||P.weight"/><div class="stat-unit">kg</div></div><div class="stat-card"><div class="stat-lbl">Height</div><input type="number" class="stat-inp" value="${P.height}" oninput="P.height=parseInt(this.value)||P.height"/><div class="stat-unit">cm</div></div><div class="stat-card"><div class="stat-lbl">Sex</div><select class="stat-sel" onchange="P.sex=this.value"><option ${P.sex==='Male'?'selected':''}>Male</option><option ${P.sex==='Female'?'selected':''}>Female</option><option ${P.sex==='Other'?'selected':''}>Other</option></select><div class="stat-unit"></div></div></div></div><div class="card" style="padding:1.25rem"><div class="section-label">Training days</div><div class="days-grid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(sk=>`<div class="day-chip ${P.days[sk]?'active':''}" onclick="P.days['${sk}']=!P.days['${sk}'];this.classList.toggle('active')">${sk}<div class="day-tk">✓</div></div>`).join('')}</div><div class="range-block"><div class="range-header"><span class="range-label">Session length</span><span class="range-val" id="pf-tv">${P.time} min</span></div><div class="range-row"><span>20m</span><input type="range" min="20" max="120" step="5" value="${P.time}" oninput="P.time=parseInt(this.value);document.getElementById('pf-tv').textContent=this.value+' min'"/><span>2hr</span></div></div><div class="section-label">Rest periods</div><div style="display:flex;flex-wrap:wrap;gap:8px" id="pf-rest">${['Short (30-60s)','Medium (60-90s)','Long (2-3 min)'].map(r=>chip(r,P.rest===r,`P.rest='${r}';soloChip(this,'pf-rest')`)).join('')}</div></div><div class="card" style="padding:1.25rem"><div class="section-label">Equipment available</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem">${equips.map(e=>chip(e,P.equip.includes(e),`toggleArr(P.equip,'${e}');this.classList.toggle('active')`)).join('')}</div><div class="section-label">Injuries or areas to avoid</div><div class="section-hint">Phantom substitutes exercises around these</div><div style="display:flex;flex-wrap:wrap;gap:8px">${injList.map(inj=>warnChip(inj,P.injuries.includes(inj),`toggleArr(P.injuries,'${inj}');this.classList.toggle('active')`)).join('')}</div></div><div class="card" style="padding:0 1.25rem"><div class="toggle-row"><div><div style="font-size:14px;font-weight:600;color:var(--text)">Daily finisher</div><div style="font-size:12px;color:var(--text2);margin-top:2px">End each session with a short finisher</div></div><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div><div class="toggle-row"><div><div style="font-size:14px;font-weight:600;color:var(--text)">Progressive overload</div><div style="font-size:12px;color:var(--text2);margin-top:2px">Auto-calculate weekly weight targets</div></div><label class="toggle"><input type="checkbox" checked/><span class="toggle-slider"></span></label></div></div><button class="btn-sec" onclick="saveAndRegen()" style="margin-top:.5rem">Save and regenerate programme</button>`;
 }
 
 function saveAndRegen(){
@@ -951,8 +984,305 @@ function fullReset(){
   renderOB();
 }
 
+
+// ══════════════════════════════════════
+// PROGRESS PHOTOS — IndexedDB storage
+// ══════════════════════════════════════
+let photoDB = null;
+const DB_NAME = 'phantom-photos';
+const DB_VER = 1;
+
+function initPhotoDB() {
+  return new Promise((resolve, reject) => {
+    if (photoDB) { resolve(photoDB); return; }
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('checkins')) {
+        db.createObjectStore('checkins', {keyPath: 'id'});
+      }
+    };
+    req.onsuccess = e => { photoDB = e.target.result; resolve(photoDB); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveCheckin(checkin) {
+  const db = await initPhotoDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('checkins', 'readwrite');
+    tx.objectStore('checkins').put(checkin);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getAllCheckins() {
+  const db = await initPhotoDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('checkins', 'readonly');
+    const req = tx.objectStore('checkins').getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteCheckin(id) {
+  const db = await initPhotoDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('checkins', 'readwrite');
+    tx.objectStore('checkins').delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// Compress image to base64, max ~150KB
+function compressImage(file, maxW=600) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = Math.min(1, maxW / img.width);
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// State for current upload session
+let pendingPhotos = {front: null, side: null, back: null};
+let analyzingPhotos = false;
+
+async function renderPhotosTab() {
+  const banner = document.getElementById('ph-checkin-banner');
+  const timeline = document.getElementById('ph-timeline');
+  const sub = document.getElementById('ph-sub');
+
+  sub.textContent = `Block ${ST.block} · Week ${ST.week} — weekly body composition check-ins`;
+
+  // Check if check-in is due (end of each programme week)
+  // Show banner prompt if no check-in exists for current week
+  const checkins = await getAllCheckins();
+  const weekKey = `block${ST.block}-week${ST.week}`;
+  const hasThisWeek = checkins.some(c => c.id === weekKey);
+
+  if (!hasThisWeek) {
+    banner.innerHTML = `<div class="banner-card">
+      <i class="ti ti-camera" style="font-size:24px;color:var(--yellow);flex-shrink:0"></i>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">Week ${ST.week} check-in ready</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Take your progress photos for Block ${ST.block}, Week ${ST.week}</div>
+      </div>
+      <button class="btn-pri" style="width:auto;padding:8px 16px;margin:0;font-size:13px" onclick="showCheckinForm()">Start</button>
+    </div>`;
+  } else {
+    banner.innerHTML = '';
+  }
+
+  // Render timeline
+  if (checkins.length === 0) {
+    timeline.innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;text-align:center">
+      <div style="font-size:32px;margin-bottom:.75rem">📸</div>
+      <div style="font-size:15px;font-weight:700;color:var(--text)">No check-ins yet</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px;line-height:1.6">Complete your first programme week then hit Start above.<br>Claude will analyse your photos and track your progress.</div>
+    </div>`;
+    return;
+  }
+
+  // Sort newest first
+  const sorted = [...checkins].sort((a,b) => b.timestamp - a.timestamp);
+  timeline.innerHTML = sorted.map(c => renderCheckinCard(c)).join('');
+}
+
+function renderCheckinCard(c) {
+  const photos = ['front','side','back'];
+  const photoHtml = photos.map(p => `
+    <div>
+      <div class="photo-label">${p}</div>
+      <div class="checkin-photo">${c.photos[p] ? `<img src="${c.photos[p]}" alt="${p} view" />` : `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:12px">—</div>`}</div>
+    </div>`).join('');
+
+  const analysis = c.analysis;
+  const bfHtml = analysis?.bodyFat ? `<span class="bf-badge">${analysis.bodyFat}</span>` : '';
+  const changeHtml = analysis?.weekChange ? `<span style="font-size:12px;color:var(--text2);margin-left:8px">${analysis.weekChange}</span>` : '';
+
+  return `<div class="checkin-card">
+    <div class="checkin-head">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text)">${c.label}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">${new Date(c.timestamp).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${bfHtml}${changeHtml}
+        <button onclick="deleteCheckinPrompt('${c.id}')" style="background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px">×</button>
+      </div>
+    </div>
+    <div class="checkin-photos">${photoHtml}</div>
+    ${analysis ? `<div class="checkin-analysis">
+      ${analysis.bodyFat ? `<div class="analysis-section"><div class="analysis-title">Body composition estimate</div><div class="analysis-text" style="color:var(--yellow);font-weight:700;font-size:15px">${analysis.bodyFat}</div></div>` : ''}
+      ${analysis.overview ? `<div class="analysis-section"><div class="analysis-title">Overview</div><div class="analysis-text">${analysis.overview}</div></div>` : ''}
+      ${analysis.strengths ? `<div class="analysis-section"><div class="analysis-title">Visible progress</div><div class="analysis-text">${analysis.strengths}</div></div>` : ''}
+      ${analysis.focus ? `<div class="analysis-section"><div class="analysis-title">Areas to focus on</div><div class="analysis-text">${analysis.focus}</div></div>` : ''}
+      ${analysis.recommendation ? `<div class="analysis-section"><div class="analysis-title">Phantom recommendation</div><div class="analysis-text">${analysis.recommendation}</div></div>` : ''}
+      ${analysis.weekChange ? `<div class="analysis-section"><div class="analysis-title">Week on week</div><div class="analysis-text">${analysis.weekChange}</div></div>` : ''}
+    </div>` : `<div style="padding:.875rem 1.25rem;border-top:1px solid var(--border)"><div style="font-size:13px;color:var(--text3)">No analysis available.</div></div>`}
+  </div>`;
+}
+
+function showCheckinForm() {
+  pendingPhotos = {front: null, side: null, back: null};
+  const timeline = document.getElementById('ph-timeline');
+  timeline.innerHTML = `<div class="card" style="padding:1.25rem">
+    <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">Week ${ST.week} check-in</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:1.25rem">Upload front, side and back photos. Stand in consistent lighting, same distance each week.</div>
+
+    <div class="photo-grid">
+      ${['front','side','back'].map(pos => `
+        <div>
+          <div class="photo-label">${pos}</div>
+          <div class="photo-upload-zone" id="zone-${pos}" onclick="triggerUpload('${pos}')">
+            <i class="ti ti-plus" style="font-size:22px;color:var(--text3)"></i>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px">Tap to upload</div>
+          </div>
+          <input type="file" id="input-${pos}" accept="image/*" capture="user" style="display:none" onchange="handlePhoto(event,'${pos}')" />
+        </div>`).join('')}
+    </div>
+
+    <div id="ph-status" style="font-size:13px;color:var(--text2);margin-bottom:1rem;min-height:20px"></div>
+
+    <button class="btn-pri" id="ph-analyse-btn" onclick="analyseCheckin()" disabled style="opacity:.35;cursor:not-allowed">
+      <i class="ti ti-sparkles"></i> Analyse with Claude
+    </button>
+    <button class="btn-ghost" onclick="renderPhotosTab()" style="margin-top:.5rem">Cancel</button>
+  </div>`;
+}
+
+function triggerUpload(pos) {
+  document.getElementById('input-'+pos)?.click();
+}
+
+async function handlePhoto(event, pos) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const zone = document.getElementById('zone-'+pos);
+  zone.innerHTML = `<div style="font-size:12px;color:var(--text2)">Compressing...</div>`;
+  const compressed = await compressImage(file);
+  pendingPhotos[pos] = compressed;
+  zone.innerHTML = `<img src="${compressed}" style="width:100%;border-radius:var(--radius);display:block" alt="${pos}" />`;
+  zone.classList.add('has-photo');
+  // Enable analyse button only when all 3 uploaded
+  const allDone = pendingPhotos.front && pendingPhotos.side && pendingPhotos.back;
+  const btn = document.getElementById('ph-analyse-btn');
+  if (btn) { btn.disabled = !allDone; btn.style.opacity = allDone ? '1' : '.35'; btn.style.cursor = allDone ? 'pointer' : 'not-allowed'; }
+  document.getElementById('ph-status').textContent = allDone ? 'All 3 photos ready — tap Analyse' : `${['front','side','back'].filter(p=>pendingPhotos[p]).length}/3 photos uploaded`;
+}
+
+async function analyseCheckin() {
+  if (analyzingPhotos) return;
+  if (!pendingPhotos.front || !pendingPhotos.side || !pendingPhotos.back) return;
+  if (!ST.apiKey) { alert('No API key found. Go to Profile to add one.'); return; }
+
+  analyzingPhotos = true;
+  const btn = document.getElementById('ph-analyse-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:18px;height:18px;border-width:2px;margin:0 auto"></div>'; }
+  document.getElementById('ph-status').textContent = 'Claude is analysing your photos...';
+
+  // Get previous check-in for comparison
+  const allCheckins = await getAllCheckins();
+  const sorted = allCheckins.sort((a,b) => a.timestamp - b.timestamp);
+  const prev = sorted.length > 0 ? sorted[sorted.length - 1] : null;
+  const prevContext = prev ? `Previous check-in (${prev.label}): Body fat estimated at ${prev.analysis?.bodyFat || 'unknown'}. ${prev.analysis?.overview || ''}` : 'This is the first check-in — no previous data to compare.';
+
+  const prompt = `You are Phantom, an AI personal trainer performing a body composition analysis from progress photos.
+
+ATHLETE PROFILE:
+- Name: ${P.name}
+- Age: ${P.age}, Sex: ${P.sex}
+- Current weight: ${P.weight}kg, Height: ${P.height}cm
+- Training goal: ${P.goal}
+- Programme week: Block ${ST.block}, Week ${ST.week}
+- Experience: ${P.exp}
+
+PREVIOUS CHECK-IN: ${prevContext}
+
+You are looking at three photos: front view, side view, and back view.
+
+Please provide a thorough body composition analysis. Be honest, direct and constructive — like a professional coach. Include:
+
+1. BODY FAT ESTIMATE: Give a specific estimated body fat percentage range (e.g. "16-18%"). Base this on visible muscle definition, fat distribution, vascularity, and overall conditioning. Be specific — a range is fine but commit to it.
+
+2. OVERVIEW: 2-3 sentences on overall body composition and conditioning.
+
+3. VISIBLE PROGRESS: What muscles are developing well, what's looking good, any positive changes from last check-in if available.
+
+4. AREAS TO FOCUS: Honest assessment of lagging muscle groups or areas that need more attention.
+
+5. WEEK ON WEEK: If previous data exists, note specific visible changes. If first check-in, note starting point observations.
+
+6. RECOMMENDATION: One specific training or nutrition recommendation based on what you see.
+
+Respond ONLY in this exact JSON format, no markdown:
+{"bodyFat":"16-18% body fat","overview":"string","strengths":"string","focus":"string","weekChange":"string","recommendation":"string"}`;
+
+  try {
+    // Build message with all 3 images
+    const imageContent = [
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data:pendingPhotos.front.split(',')[1]}},
+      {type:'text',text:'(Front view)'},
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data:pendingPhotos.side.split(',')[1]}},
+      {type:'text',text:'(Side view)'},
+      {type:'image',source:{type:'base64',media_type:'image/jpeg',data:pendingPhotos.back.split(',')[1]}},
+      {type:'text',text:'(Back view)'},
+      {type:'text',text:prompt},
+    ];
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-api-key':ST.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:imageContent}]})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    const raw = data.content?.map(b=>b.text||'').join('')||'';
+    const analysis = JSON.parse(raw.replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'').trim());
+
+    const checkin = {
+      id: `block${ST.block}-week${ST.week}`,
+      label: `Block ${ST.block} · Week ${ST.week}`,
+      timestamp: Date.now(),
+      photos: {front: pendingPhotos.front, side: pendingPhotos.side, back: pendingPhotos.back},
+      weight: P.weight,
+      analysis,
+    };
+    await saveCheckin(checkin);
+    pendingPhotos = {front:null, side:null, back:null};
+    analyzingPhotos = false;
+    renderPhotosTab();
+
+  } catch(e) {
+    analyzingPhotos = false;
+    console.error('Analysis failed:', e);
+    document.getElementById('ph-status').textContent = 'Analysis failed: ' + e.message;
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-sparkles"></i> Retry analysis'; btn.style.opacity='1'; btn.style.cursor='pointer'; }
+  }
+}
+
+async function deleteCheckinPrompt(id) {
+  if (!confirm('Delete this check-in? Photos and analysis will be permanently removed.')) return;
+  await deleteCheckin(id);
+  renderPhotosTab();
+}
+
+
 loadState();
 </script>
 </body>
 </html>
-
