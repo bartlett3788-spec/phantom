@@ -563,7 +563,11 @@ function loadState(){
   if(ST.onboarded&&ST.programme)launchApp();else{obStep=0;renderOB();}
 }
 function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({...ST,profile:P}));}catch(e){}}
-function activeFull(){return DAYS.filter(fd=>P.days[F2S[fd]]);}
+function activeFull(){
+  // Always return training days in Mon-first order so sequence starts on Monday
+  const MON_FIRST_DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  return MON_FIRST_DAYS.filter(fd=>P.days[F2S[fd]]);
+}
 function isValidProg(p){if(!p||!Array.isArray(p.weeks)||p.weeks.length===0)return false;const w1=p.weeks[0];if(!Array.isArray(w1.days)||w1.days.length!==7)return false;return w1.days.some(d=>!d.isRest&&Array.isArray(d.exercises)&&d.exercises.length>0);}
 function avInit(n){const p=n.trim().split(' ').filter(Boolean);return(p.length>=2?p[0][0]+p[p.length-1][0]:n.trim().slice(0,2)).toUpperCase()||'?';}
 function soloChip(el,gid){document.querySelectorAll('#'+gid+' .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
@@ -600,11 +604,21 @@ function renderOB(){
 
 async function generate(){
   document.getElementById('gen-btn').disabled=true;
-  const af=activeFull();
   const sLabel=STRUCTURES.find(s=>s.id===P.structure)?.label||P.structure;
   const equip=P.equip.length?P.equip.join(', '):'Dumbbells only';
   const inj=(P.injuries.length&&!P.injuries.includes('None'))?P.injuries.join(', '):'None';
-  const structInstr={PPL_UL:'Rotate Push, Pull, Legs, Upper, Lower across training days.',PPL:'Rotate Push, Pull, Legs across training days.',UL:'Alternate Upper body and Lower body sessions.',MSG:'Assign: Chest & Triceps, Back & Biceps, Legs, Shoulders, Arms in order.',TB:'Every training day is a Total Body session.',CIRCUIT:'Every training day is a Circuit session.'};
+  // Build the session sequence for the AI — assign sessions to training days in order
+  const af=activeFull();
+  const seq=SEQ[P.structure]||SEQ.PPL_UL;
+  const sessionAssignment=af.map((day,i)=>`${day}=${seq[i%seq.length]}`).join(', ');
+  const structInstr={
+    PPL_UL:`Assign sessions in this EXACT order to training days only: ${sessionAssignment}. Do not assign any session to rest days.`,
+    PPL:`Assign sessions in this EXACT order to training days only: ${sessionAssignment}. Do not assign any session to rest days.`,
+    UL:`Assign sessions in this EXACT order to training days only: ${sessionAssignment}. Do not assign any session to rest days.`,
+    MSG:`Assign sessions in this EXACT order to training days only: ${sessionAssignment}. Do not assign any session to rest days.`,
+    TB:`Assign sessions in this EXACT order to training days only: ${sessionAssignment}. Do not assign any session to rest days.`,
+    CIRCUIT:`Assign sessions in this EXACT order to training days only: ${sessionAssignment}. Do not assign any session to rest days.`,
+  };
   document.getElementById('ob-inner').innerHTML=`<div class="generating-wrap"><div class="spinner"></div><div style="font-size:18px;font-weight:800;color:var(--yellow);margin-top:1.5rem;letter-spacing:-.3px">Building your programme</div><div style="font-size:13px;color:var(--text2);margin-top:4px">${P.name} · ${sLabel}</div><div class="gen-steps">${['Analysing your profile','Designing '+sLabel+' structure','Filtering exercises to: '+equip,'Calculating progressive overload','Adding coaching notes'].map((s,i)=>`<div class="gen-step ${i===0?'ga':''}" id="gs${i}"><div class="gen-dot ${i===0?'ga':''}"></div>${s}</div>`).join('')}</div></div>`;
   [800,1600,2400,3200].forEach((t,i)=>setTimeout(()=>{const prev=document.getElementById('gs'+i);const next=document.getElementById('gs'+(i+1));if(prev){prev.classList.replace('ga','gd');prev.querySelector('.gen-dot')?.classList.replace('ga','gd');}if(next){next.classList.add('ga');next.querySelector('.gen-dot')?.classList.add('ga');}},t));
 
@@ -614,7 +628,7 @@ Training days (ONLY these): ${af.join(', ')}
 Session time: ${P.time} minutes
 AVAILABLE EQUIPMENT (CRITICAL — only use exercises that require this equipment): ${equip}
 Injuries / avoid: ${inj}
-STRUCTURE INSTRUCTION: ${structInstr[P.structure]||structInstr.PPL_UL}
+SESSION ASSIGNMENT (follow exactly): ${structInstr[P.structure]}
 
 STRICT RULES:
 1. Output ONLY valid JSON. No markdown. No explanation.
@@ -748,7 +762,8 @@ function buildFallback(){
     phantomNotes:['Weights increase ~2.5kg each week — stick to the targets.',`Sessions are ${P.time} minutes including warm-up.`,`All exercises use only: ${P.equip.length?P.equip.join(', '):'bodyweight'}.`],
     weeks:[1,2,3,4].map(wk=>({
       week:wk,
-      days:DAYS.map(fullDay=>{
+      // Build days in Mon-first order so programme always starts Monday
+      days:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(fullDay=>{
         const isTraining=af.includes(fullDay);
         if(!isTraining)return{day:fullDay,isRest:true};
         const tIdx=af.indexOf(fullDay);
@@ -801,7 +816,7 @@ function updateHeader(){
   const greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
   const vd=DAYS[viewDayIdx];
   const wk=ST.programme?.weeks.find(w=>w.week===ST.week)||ST.programme?.weeks[0];
-  const sess=wk?.days[viewDayIdx];
+  const sess=wk?.days.find(d=>d.day===DAYS[viewDayIdx]);
   const sDesc=(sess&&!sess.isRest)?` · ${sess.sessionType}`:'· Rest day';
   document.getElementById('t-greeting').textContent=`${greet}, ${P.name}`;
   document.getElementById('t-sub').textContent=`Block ${ST.block} · Week ${ST.week} · ${vd} ${sDesc}`;
@@ -823,11 +838,12 @@ function renderDayStrip(){
   // Display Mon→Sun (Mon=1,Tue=2...Sat=6,Sun=0) — week starts Monday
   const MON_FIRST=[1,2,3,4,5,6,0];
   strip.innerHTML=MON_FIRST.map(idx=>{
-    const dayData=wk?.days[idx];
+    const fullDay=DAYS[idx];
+    const dayData=wk?.days.find(d=>d.day===fullDay);
     const isRest=!dayData||dayData.isRest;
     const isToday=idx===todayIdx;
     const isViewing=idx===viewDayIdx;
-    return`<div class="ds-btn${isRest?' rest-day':''}${isViewing?' viewing':''}${isToday?' today-dot':''}" onclick="viewDayIdx=${idx};renderDayStrip();renderSession();updateHeader()" title="${DAYS[idx]}">${DAYS_SHORT[idx]}</div>`;
+    return`<div class="ds-btn${isRest?' rest-day':''}${isViewing?' viewing':''}${isToday?' today-dot':''}" onclick="viewDayIdx=${idx};renderDayStrip();renderSession();updateHeader()" title="${fullDay}">${DAYS_SHORT[idx]}</div>`;
   }).join('');
 }
 
@@ -836,7 +852,7 @@ function renderSession(){
   if(!ST.programme){c.innerHTML='';return;}
   const vd=DAYS[viewDayIdx];
   const wk=ST.programme.weeks.find(w=>w.week===ST.week)||ST.programme.weeks[0];
-  const dayData=wk?.days[viewDayIdx];
+  const dayData=wk?.days.find(d=>d.day===DAYS[viewDayIdx]);
   if(!dayData||dayData.isRest){c.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem;text-align:center"><div style="font-size:32px;margin-bottom:.75rem">🌙</div><div style="font-size:16px;font-weight:700;color:var(--text)">Rest day</div><div style="font-size:13px;color:var(--text2);margin-top:6px">${vd} — recovery is where the gains happen.</div></div>`;return;}
   const sk=`w${ST.week}:${viewDayIdx}`;
   const exs=dayData.exercises||[];
@@ -872,7 +888,7 @@ function renderModal(){
   if(!modalCtx){document.getElementById('t-modal').innerHTML='';return;}
   const{sk,exIdx}=modalCtx;
   const wk=ST.programme.weeks.find(w=>w.week===ST.week)||ST.programme.weeks[0];
-  const ex=wk?.days[viewDayIdx]?.exercises[exIdx];
+  const ex=wk?.days.find(d=>d.day===DAYS[viewDayIdx])?.exercises[exIdx];
   if(!ex)return;
   const logged=ST.loggedSets[sk]?.[exIdx]||[];
   const nextSet=logged.length+1;
@@ -885,7 +901,7 @@ function saveSet(){
   if(!modalCtx)return;
   const{sk,exIdx}=modalCtx;
   const wk=ST.programme.weeks.find(w=>w.week===ST.week)||ST.programme.weeks[0];
-  const ex=wk?.days[viewDayIdx]?.exercises[exIdx];if(!ex)return;
+  const ex=wk?.days.find(d=>d.day===DAYS[viewDayIdx])?.exercises[exIdx];if(!ex)return;
   const w=parseFloat(document.getElementById('m-w')?.value)||0;
   const r=parseInt(document.getElementById('m-r')?.value)||0;
   const notes=document.getElementById('m-notes')?.value||'';
@@ -936,7 +952,13 @@ function renderProg(){
   const wk=ST.programme.weeks.find(w=>w.week===progWeek)||ST.programme.weeks[0];
   const c=document.getElementById('p-content');
   const colors={Push:'var(--yellow)',Pull:'var(--orange)',Legs:'var(--pink)',Upper:'var(--yellow)',Lower:'var(--orange)','Total Body A':'var(--yellow)','Total Body B':'var(--orange)',Circuit:'var(--pink)','Chest & Triceps':'var(--yellow)','Back & Biceps':'var(--orange)',Shoulders:'var(--pink)',Arms:'var(--yellow)'};
-  c.innerHTML=(wk?.days||[]).map(day=>{
+  // Reorder days Mon-first for display
+  const MON_FIRST=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const orderedDays=(wk?.days||[]).slice().sort((a,b)=>{
+    const ai=MON_FIRST.indexOf(a.day); const bi=MON_FIRST.indexOf(b.day);
+    return (ai===-1?99:ai)-(bi===-1?99:bi);
+  });
+  c.innerHTML=orderedDays.map(day=>{
     if(day.isRest)return`<div class="day-card"><div class="day-head" style="cursor:default"><div style="font-size:14px;font-weight:700;color:var(--text)">${day.day}</div><span style="background:var(--bg);color:var(--text3);padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border2)">Rest</span></div></div>`;
     const col=colors[day.sessionType]||'var(--yellow)';
     const exRows=(day.exercises||[]).map((ex,i)=>`<div class="ex-row-ai"><div class="ex-num">${i+1}</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text)">${ex.name}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${ex.sets}x${ex.reps} · <span style="color:var(--yellow);font-weight:700">${ex.targetWeight}</span>${ex.notes?' · <em style="color:var(--text3)">'+ex.notes+'</em>':''}</div></div></div>`).join('');
